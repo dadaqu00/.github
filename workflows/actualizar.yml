@@ -1,0 +1,40 @@
+name: Actualizar Token M3U de VS Sports
+
+on:
+  schedule:
+    # Se ejecuta automáticamente cada 4 horas.
+    # Puedes cambiar el "4" si notas que el token expira antes.
+    - cron: '0 */4 * * *'
+  workflow_dispatch: # Permite forzar la ejecución del script manualmente desde la web de GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Descargar el código del repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar entorno de Python
+      uses: actions/setup-python@v5
+      with:
+        python-node-version: '3.10'
+
+    - name: Instalar librerías necesarias
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Ejecutar script de actualización
+      run: python actualizar_lista.py
+
+    - name: Guardar y subir los cambios al repositorio
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add lista_vs_sports.m3u
+        # Solo hace commit si el archivo M3U realmente cambió para evitar bucles
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-actualización: Nuevo token generado" && git push)
